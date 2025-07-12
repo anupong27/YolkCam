@@ -1,4 +1,4 @@
-// --- แปลง RGB → XYZ → Lab ---
+// ฟังก์ชันแปลง RGB → Lab และคำนวณ ΔE
 function rgbToXyz(r, g, b) {
   r /= 255; g /= 255; b /= 255;
   r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
@@ -36,7 +36,7 @@ function deltaE(lab1, lab2) {
   );
 }
 
-// --- เฉดสี Roche YolkFan ---
+// เฉด Roche YolkFan
 const rocheShades = [
   { name: "1", rgb: [200, 185, 81] },
   { name: "2", rgb: [201, 179, 70] },
@@ -67,7 +67,7 @@ function findClosestRocheShade(labSample) {
   return { closestShade, minDistance };
 }
 
-// --- DOM ---
+// DOM
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const imageInput = document.getElementById("imageInput");
@@ -84,14 +84,13 @@ let selectedX = null;
 let selectedY = null;
 let isCameraMode = false;
 
-// --- สร้างวิดีโอ ---
 const videoElement = document.createElement("video");
 videoElement.autoplay = true;
 videoElement.playsInline = true;
 videoElement.style.display = "none";
 document.body.appendChild(videoElement);
 
-// --- รีเซ็ต ---
+// ฟังก์ชันรีเซ็ต
 function resetCanvasState() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   loadedImage = null;
@@ -106,7 +105,7 @@ function resetCanvasState() {
   videoElement.srcObject = null;
 }
 
-// --- อ่านค่าสี ---
+// อ่านค่าสี
 function getColorAtPoint(x, y) {
   if (!ctx || x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return null;
   const pixel = ctx.getImageData(x, y, 1, 1).data;
@@ -133,7 +132,7 @@ function drawCircleAtSelected() {
 function updateColorAtSelected() {
   if (selectedX === null || selectedY === null) {
     colorResult.textContent = "🎨 กรุณาเลือกจุดบนภาพหรือวิดีโอ";
-    rocheResult.textContent = "📊 ค่าที่วัดได้: -";
+    rocheResult.textContent = "📊 ระดับสีไข่แดง: -";
     shadePreview.style.backgroundColor = "";
     return;
   }
@@ -141,7 +140,7 @@ function updateColorAtSelected() {
   const color = getColorAtPoint(selectedX, selectedY);
   if (!color) {
     colorResult.textContent = "🎨 ไม่สามารถอ่านค่าสีได้";
-    rocheResult.textContent = "📊 ค่าที่วัดได้: -";
+    rocheResult.textContent = "📊 ระดับสีไข่แดง: -";
     shadePreview.style.backgroundColor = "";
     return;
   }
@@ -150,11 +149,11 @@ function updateColorAtSelected() {
   const { closestShade, minDistance } = findClosestRocheShade(lab);
 
   colorResult.textContent = `🎨 RGB: (${color.r}, ${color.g}, ${color.b}) | Lab: (L*${lab.L.toFixed(2)}, a*${lab.a.toFixed(2)}, b*${lab.b.toFixed(2)})`;
-  rocheResult.textContent = `📊 ค่าที่วัดได้: ${closestShade.name} (ΔE = ${minDistance.toFixed(2)})`;
+  rocheResult.textContent = `📊 ระดับสีไข่แดง: ${closestShade.name} (ΔE = ${minDistance.toFixed(2)})`;
   shadePreview.style.backgroundColor = `rgb(${closestShade.rgb.join(",")})`;
 }
 
-// --- กล้อง ---
+// เรียกกล้องหลัง (ถ้ามี)
 useCameraBtn.addEventListener("click", async () => {
   errorMessage.style.display = "none";
   resetCanvasState();
@@ -163,52 +162,44 @@ useCameraBtn.addEventListener("click", async () => {
 
   try {
     videoStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { exact: "environment" } // กล้องหลัง
-      }
+      video: { facingMode: { ideal: "environment" } },
+      audio: false
     });
-  } catch (err) {
-    // ถ้าไม่มีกล้องหลัง ใช้กล้องไหนก็ได้
-    try {
-      videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-    } catch (error) {
-      errorMessage.textContent = "ไม่สามารถเข้าถึงกล้องได้: " + error.message;
-      errorMessage.style.display = "block";
-      return;
-    }
-  }
 
-  videoElement.srcObject = videoStream;
-  videoElement.onloadedmetadata = () => {
-    canvas.width = videoElement.videoWidth;
-    canvas.height = videoElement.videoHeight;
-    selectedX = Math.floor(canvas.width / 2);
-    selectedY = Math.floor(canvas.height / 2);
+    videoElement.srcObject = videoStream;
 
-    function drawVideo() {
-      if (isCameraMode && videoStream) {
-        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-        drawCircleAtSelected();
-        updateColorAtSelected();
-        requestAnimationFrame(drawVideo);
+    videoElement.onloadedmetadata = () => {
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+
+      selectedX = Math.floor(canvas.width / 2);
+      selectedY = Math.floor(canvas.height / 2);
+
+      function drawVideo() {
+        if (isCameraMode && videoStream) {
+          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+          drawCircleAtSelected();
+          updateColorAtSelected();
+          requestAnimationFrame(drawVideo);
+        }
       }
-    }
 
-    drawVideo();
-  };
+      drawVideo();
+    };
+  } catch (err) {
+    errorMessage.textContent = "ไม่สามารถเข้าถึงกล้องได้: " + err.message;
+    errorMessage.style.display = "block";
+    isCameraMode = false;
+  }
 });
 
-// --- ใช้ภาพ ---
+// โหลดภาพ
 useImageBtn.addEventListener("click", () => {
   errorMessage.style.display = "none";
   resetCanvasState();
   isCameraMode = false;
   imageInput.style.display = "block";
   imageInput.click();
-});
-
-imageInput.addEventListener("click", () => {
-  errorMessage.style.display = "none";
 });
 
 imageInput.addEventListener("change", (e) => {
@@ -227,8 +218,10 @@ imageInput.addEventListener("change", (e) => {
     canvas.width = img.width;
     canvas.height = img.height;
     ctx.drawImage(img, 0, 0);
+
     selectedX = Math.floor(img.width / 2);
     selectedY = Math.floor(img.height / 2);
+
     drawCircleAtSelected();
     updateColorAtSelected();
   };
@@ -239,17 +232,27 @@ imageInput.addEventListener("change", (e) => {
   img.src = URL.createObjectURL(file);
 });
 
-// --- คลิกเลือกจุด ---
+// 🖱️ รองรับการคลิกบนคอมพิวเตอร์
 canvas.addEventListener("click", (e) => {
-  if (!loadedImage && !videoStream) {
-    errorMessage.textContent = "กรุณาโหลดภาพหรือเปิดกล้องก่อนเลือกสี";
-    errorMessage.style.display = "block";
-    return;
-  }
-
   const rect = canvas.getBoundingClientRect();
-  selectedX = Math.floor(e.clientX - rect.left);
-  selectedY = Math.floor(e.clientY - rect.top);
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  selectedX = Math.floor(x);
+  selectedY = Math.floor(y);
   drawCircleAtSelected();
   updateColorAtSelected();
+});
+
+// 📱 รองรับการแตะบนมือถือ
+canvas.addEventListener("touchstart", (e) => {
+  if (e.touches.length > 0) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+    selectedX = Math.floor(x);
+    selectedY = Math.floor(y);
+    drawCircleAtSelected();
+    updateColorAtSelected();
+  }
 });
