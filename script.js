@@ -1,4 +1,4 @@
-// ฟังก์ชันแปลง RGB → XYZ → Lab และคำนวณ ΔE (CIE76)
+// --- แปลง RGB → XYZ → Lab ---
 function rgbToXyz(r, g, b) {
   r /= 255; g /= 255; b /= 255;
   r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
@@ -36,7 +36,7 @@ function deltaE(lab1, lab2) {
   );
 }
 
-// เฉดสี Roche YolkFan
+// --- เฉดสี Roche YolkFan ---
 const rocheShades = [
   { name: "1", rgb: [200, 185, 81] },
   { name: "2", rgb: [201, 179, 70] },
@@ -67,7 +67,7 @@ function findClosestRocheShade(labSample) {
   return { closestShade, minDistance };
 }
 
-// DOM
+// --- DOM ---
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const imageInput = document.getElementById("imageInput");
@@ -84,13 +84,14 @@ let selectedX = null;
 let selectedY = null;
 let isCameraMode = false;
 
+// --- สร้างวิดีโอ ---
 const videoElement = document.createElement("video");
 videoElement.autoplay = true;
 videoElement.playsInline = true;
 videoElement.style.display = "none";
 document.body.appendChild(videoElement);
 
-// ฟังก์ชันรีเซ็ต
+// --- รีเซ็ต ---
 function resetCanvasState() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   loadedImage = null;
@@ -105,7 +106,7 @@ function resetCanvasState() {
   videoElement.srcObject = null;
 }
 
-// อ่านค่าสีที่จุด
+// --- อ่านค่าสี ---
 function getColorAtPoint(x, y) {
   if (!ctx || x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return null;
   const pixel = ctx.getImageData(x, y, 1, 1).data;
@@ -153,7 +154,7 @@ function updateColorAtSelected() {
   shadePreview.style.backgroundColor = `rgb(${closestShade.rgb.join(",")})`;
 }
 
-// กล้อง
+// --- กล้อง ---
 useCameraBtn.addEventListener("click", async () => {
   errorMessage.style.display = "none";
   resetCanvasState();
@@ -161,35 +162,43 @@ useCameraBtn.addEventListener("click", async () => {
   imageInput.style.display = "none";
 
   try {
-    videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-    videoElement.srcObject = videoStream;
-
-    videoElement.onloadedmetadata = () => {
-      canvas.width = videoElement.videoWidth;
-      canvas.height = videoElement.videoHeight;
-
-      selectedX = Math.floor(canvas.width / 2);
-      selectedY = Math.floor(canvas.height / 2);
-
-      function drawVideo() {
-        if (isCameraMode && videoStream) {
-          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-          drawCircleAtSelected();
-          updateColorAtSelected();
-          requestAnimationFrame(drawVideo);
-        }
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { exact: "environment" } // กล้องหลัง
       }
-
-      drawVideo();
-    };
+    });
   } catch (err) {
-    errorMessage.textContent = "ไม่สามารถเข้าถึงกล้องได้: " + err.message;
-    errorMessage.style.display = "block";
-    isCameraMode = false;
+    // ถ้าไม่มีกล้องหลัง ใช้กล้องไหนก็ได้
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    } catch (error) {
+      errorMessage.textContent = "ไม่สามารถเข้าถึงกล้องได้: " + error.message;
+      errorMessage.style.display = "block";
+      return;
+    }
   }
+
+  videoElement.srcObject = videoStream;
+  videoElement.onloadedmetadata = () => {
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+    selectedX = Math.floor(canvas.width / 2);
+    selectedY = Math.floor(canvas.height / 2);
+
+    function drawVideo() {
+      if (isCameraMode && videoStream) {
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        drawCircleAtSelected();
+        updateColorAtSelected();
+        requestAnimationFrame(drawVideo);
+      }
+    }
+
+    drawVideo();
+  };
 });
 
-// อัปโหลดภาพ
+// --- ใช้ภาพ ---
 useImageBtn.addEventListener("click", () => {
   errorMessage.style.display = "none";
   resetCanvasState();
@@ -218,10 +227,8 @@ imageInput.addEventListener("change", (e) => {
     canvas.width = img.width;
     canvas.height = img.height;
     ctx.drawImage(img, 0, 0);
-
     selectedX = Math.floor(img.width / 2);
     selectedY = Math.floor(img.height / 2);
-
     drawCircleAtSelected();
     updateColorAtSelected();
   };
@@ -232,7 +239,7 @@ imageInput.addEventListener("change", (e) => {
   img.src = URL.createObjectURL(file);
 });
 
-// คลิกบน canvas เพื่อเลือกจุดวัดสี
+// --- คลิกเลือกจุด ---
 canvas.addEventListener("click", (e) => {
   if (!loadedImage && !videoStream) {
     errorMessage.textContent = "กรุณาโหลดภาพหรือเปิดกล้องก่อนเลือกสี";
@@ -243,7 +250,6 @@ canvas.addEventListener("click", (e) => {
   const rect = canvas.getBoundingClientRect();
   selectedX = Math.floor(e.clientX - rect.left);
   selectedY = Math.floor(e.clientY - rect.top);
-
   drawCircleAtSelected();
   updateColorAtSelected();
 });
