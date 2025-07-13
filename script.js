@@ -148,9 +148,9 @@ function updateColorAtSelected() {
   const lab = rgbToLab(color.r, color.g, color.b);
   const { closestShade, minDistance } = findClosestRocheShade(lab);
 
-  colorResult.textContent = 🎨 RGB: (${color.r}, ${color.g}, ${color.b}) | Lab: (L*${lab.L.toFixed(2)}, a*${lab.a.toFixed(2)}, b*${lab.b.toFixed(2)});
-  rocheResult.textContent = 📊 ระดับสีไข่แดง: ${closestShade.name} (ΔE = ${minDistance.toFixed(2)});
-  shadePreview.style.backgroundColor = rgb(${closestShade.rgb.join(",")});
+  colorResult.textContent = `🎨 RGB: (${color.r}, ${color.g}, ${color.b}) | Lab: (L*${lab.L.toFixed(2)}, a*${lab.a.toFixed(2)}, b*${lab.b.toFixed(2)})`;
+  rocheResult.textContent = `📊 ระดับสีไข่แดง: ${closestShade.name} (ΔE = ${minDistance.toFixed(2)})`;
+  shadePreview.style.backgroundColor = `rgb(${closestShade.rgb.join(",")})`;
 }
 
 // เรียกกล้องหลัง (ถ้ามี)
@@ -255,4 +255,5 @@ canvas.addEventListener("touchstart", (e) => {
     drawCircleAtSelected();
     updateColorAtSelected();
   }
-}); 
+  
+});
