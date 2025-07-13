@@ -254,5 +254,60 @@ canvas.addEventListener("touchstart", (e) => {
     selectedY = Math.floor(y);
     drawCircleAtSelected();
     updateColorAtSelected();
+  useCameraBtn.addEventListener("click", async () => {
+  errorMessage.style.display = "none";
+  resetCanvasState();
+  isCameraMode = true;
+  imageInput.style.display = "none";
+
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" }
+      },
+      audio: false
+    });
+
+    videoElement.srcObject = videoStream;
+
+    videoElement.onloadedmetadata = async () => {
+      const scale = 2;
+      canvas.width = videoElement.videoWidth * scale;
+      canvas.height = videoElement.videoHeight * scale;
+
+      canvas.style.width = videoElement.videoWidth + "px";
+      canvas.style.height = videoElement.videoHeight + "px";
+
+      selectedX = Math.floor(canvas.width / 2);
+      selectedY = Math.floor(canvas.height / 2);
+
+      // 🔍 ซูม 2.5 เท่า ถ้ารองรับ
+      const [track] = videoStream.getVideoTracks();
+      const capabilities = track.getCapabilities();
+      if (capabilities.zoom) {
+        try {
+          await track.applyConstraints({
+            advanced: [{ zoom: Math.min(2.5, capabilities.zoom.max) }]
+          });
+        } catch (err) {
+          console.warn("ซูมไม่ได้:", err.message);
+        }
+      }
+
+      function drawVideo() {
+        if (isCameraMode && videoStream) {
+          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+          drawCircleAtSelected();
+          updateColorAtSelected();
+          requestAnimationFrame(drawVideo);
+        }
+      }
+
+      drawVideo();
+    };
+  } catch (err) {
+    errorMessage.textContent = "ไม่สามารถเข้าถึงกล้องได้: " + err.message;
+    errorMessage.style.display = "block";
+    isCameraMode = false;
   }
 });
