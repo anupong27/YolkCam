@@ -4,88 +4,110 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>วัดสีไข่แดง (YolkFan Analyzer)</title>
+
+  <!-- ฟอนต์ Kanit จาก Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Kanit', sans-serif;
       margin: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      background-color: #f4f4f4;
+      background-color: #f7f7f5;
     }
+
     h1 {
-      color: #333;
+      color: #020202;
       margin-bottom: 10px;
       text-align: center;
     }
+
     .controls {
       margin-bottom: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
     }
+
     button {
+      font-family: 'Kanit', sans-serif;
       padding: 10px 20px;
       margin: 5px;
       font-size: 1em;
       cursor: pointer;
     }
+
     #imageInput {
       display: none;
     }
+
     #canvas {
-      border: 2px solid #333;
+      border: 2px solid #0b0b0b;
       max-width: 100%;
       max-height: 80vh;
       cursor: crosshair;
       margin-bottom: 10px;
     }
+
     #shadePreview {
       width: 100px;
       height: 100px;
-      border: 2px solid #333;
+      border: 2px solid #0a0a0a;
       margin: 10px 0;
-      background-color: white;
+      background-color: rgb(245, 241, 241);
     }
-    #colorResult, #rocheResult {
+
+    #colorResult, #rocheResult, #errorMessage {
       font-size: 1.1em;
       margin: 5px 0;
       text-align: center;
     }
+
     #errorMessage {
       color: red;
-      margin: 10px 0;
       display: none;
     }
+
     footer {
       margin-top: 30px;
       text-align: center;
       font-size: 0.9em;
-      color: #666;
+      color: #333;
       border-top: 1px solid #ccc;
       padding-top: 10px;
       width: 100%;
+    }
+
+    .extra-buttons {
+      margin-top: 10px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
 
-  <h1>วัดสีไข่แดง<br>Yolk Color Scale </h1>
-
+  <img src="images/หัว.jpg" alt="ระบบตรวจวัดสีไข่แดง" style="max-width: 100%; height: auto;" />
   <div class="controls">
-    <button id="useCamera">📷 ใช้กล้อง</button>
-    <button id="useImage">🖼️ อัปโหลดภาพ</button>
+    <button id="useCamera">📸 ใช้กล้อง</button>
+    <button id="useImage">🗂️ อัปโหลดภาพ</button>
     <input type="file" id="imageInput" accept="image/*">
   </div>
 
-  <div id="errorMessage"></div>
+  <div id="errorMessage">⚠️ พบข้อผิดพลาด: กรุณาลองใหม่อีกครั้ง</div>
   <canvas id="canvas"></canvas>
   <div id="shadePreview"></div>
-  <div id="colorResult">🎨 กรุณาเลือกจุดบนภาพหรือวิดีโอ</div>
+  <div id="colorResult">🖱️ กรุณาคลิกจุดบนภาพเพื่อเลือกสี</div>
   <div id="rocheResult">📊 ระดับสีไข่แดง: -</div>
 
+
   <footer>
-    จัดทำโดย: นายอนุพงษ์ เปลี่ยนไธสง<br>
+    <span style="font-size: 1em; font-weight: bold;">ออกแบบและพัฒนาโดย : นายอนุพงษ์  เปลี่ยนไธสง</span><br>
+    <span style="font-size: 1em; font-weight: bold;">แผนกวิชาสัตวศาสตร์  วิทยาลัยเกษตรและเทคโนโลยีบุรีรัมย์</span><br>
+    <span style="font-size: 1em; font-weight: bold;">สำนักงานคณะกรรมการการอาชีวศึกษา</span><br>
   </footer>
 
   <script src="script.js"></script>
 </body>
 </html>
-

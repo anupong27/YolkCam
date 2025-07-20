@@ -129,29 +129,47 @@ function drawCircleAtSelected() {
   ctx.stroke();
 }
 
+// เก็บผลการวิเคราะห์ล่าสุดไว้ในตัวแปร global
+let latestAnalysis = {
+  rgb: null,
+  lab: null,
+  roche: null,
+  deltaE: null,
+};
+
+// แก้ไขฟังก์ชัน updateColorAtSelected ให้เก็บค่าใน latestAnalysis ด้วย
 function updateColorAtSelected() {
   if (selectedX === null || selectedY === null) {
-    colorResult.textContent = "🎨 กรุณาเลือกจุดบนภาพหรือวิดีโอ";
+    colorResult.textContent = "🖱️ กรุณาเลือกจุดบนภาพหรือวิดีโอ";
     rocheResult.textContent = "📊 ระดับสีไข่แดง: -";
     shadePreview.style.backgroundColor = "";
+    latestAnalysis = { rgb: null, lab: null, roche: null, deltaE: null };
     return;
   }
 
   const color = getColorAtPoint(selectedX, selectedY);
   if (!color) {
-    colorResult.textContent = "🎨 ไม่สามารถอ่านค่าสีได้";
+    colorResult.textContent = "🖱️ ไม่สามารถอ่านค่าสีได้";
     rocheResult.textContent = "📊 ระดับสีไข่แดง: -";
     shadePreview.style.backgroundColor = "";
+    latestAnalysis = { rgb: null, lab: null, roche: null, deltaE: null };
     return;
   }
 
   const lab = rgbToLab(color.r, color.g, color.b);
   const { closestShade, minDistance } = findClosestRocheShade(lab);
 
-  colorResult.textContent = `🎨 RGB: (${color.r}, ${color.g}, ${color.b}) | Lab: (L*${lab.L.toFixed(2)}, a*${lab.a.toFixed(2)}, b*${lab.b.toFixed(2)})`;
+  colorResult.textContent = `🖱️ RGB: (${color.r}, ${color.g}, ${color.b}) | Lab: (L*${lab.L.toFixed(2)}, a*${lab.a.toFixed(2)}, b*${lab.b.toFixed(2)})`;
   rocheResult.textContent = `📊 ระดับสีไข่แดง: ${closestShade.name} (ΔE = ${minDistance.toFixed(2)})`;
   shadePreview.style.backgroundColor = `rgb(${closestShade.rgb.join(",")})`;
+
+  // บันทึกผลล่าสุด
+  latestAnalysis.rgb = color;
+  latestAnalysis.lab = lab;
+  latestAnalysis.roche = closestShade.name;
+  latestAnalysis.deltaE = minDistance;
 }
+
 
 // เรียกกล้องหลัง (ถ้ามี)
 useCameraBtn.addEventListener("click", async () => {
@@ -254,6 +272,5 @@ canvas.addEventListener("touchstart", (e) => {
     selectedY = Math.floor(y);
     drawCircleAtSelected();
     updateColorAtSelected();
-  }
-  
+    }
 });
