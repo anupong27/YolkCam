@@ -38,21 +38,22 @@ function deltaE(lab1, lab2) {
 
 // เฉด Roche YolkFan
 const rocheShades = [
-  { name: "1", rgb: [200, 185, 81] },
-  { name: "2", rgb: [201, 179, 70] },
-  { name: "3", rgb: [202, 179, 63] },
-  { name: "4", rgb: [204, 177, 64] },
-  { name: "5", rgb: [204, 167, 50] },
-  { name: "6", rgb: [204, 161, 46] },
-  { name: "7", rgb: [207, 156, 39] },
-  { name: "8", rgb: [208, 151, 36] },
-  { name: "9", rgb: [209, 131, 23] },
-  { name: "10", rgb: [209, 120, 16] },
-  { name: "11", rgb: [211, 107, 12] },
-  { name: "12", rgb: [212, 89, 11] },
-  { name: "13", rgb: [214, 82, 8] },
-  { name: "14", rgb: [212, 68, 8] },
-  { name: "15", rgb: [211, 53, 8] },
+{ name: "1",  rgb: [241, 202, 107] },
+  { name: "2",  rgb: [247, 198,  89] },
+  { name: "3",  rgb: [252, 198,  83] },
+  { name: "4",  rgb: [255, 197,  68] },
+  { name: "5",  rgb: [255, 187,  40] },
+  { name: "6",  rgb: [255, 183,  26] },
+  { name: "7",  rgb: [255, 182,   0] },
+  { name: "8",  rgb: [255, 180,   0] },
+  { name: "9",  rgb: [255, 172,   0] },
+  { name: "10", rgb: [255, 165,   0] },
+  { name: "11", rgb: [255, 157,   0] },
+  { name: "12", rgb: [255, 144,   0] },
+  { name: "13", rgb: [255, 140,   0] },
+  { name: "14", rgb: [255, 129,   9] },
+  { name: "15", rgb: [253, 116,  25] },
+  { name: "16", rgb: [239,  95,  30] },
 ].map(s => ({ ...s, lab: rgbToLab(...s.rgb) }));
 
 function findClosestRocheShade(labSample) {
@@ -274,3 +275,4 @@ canvas.addEventListener("touchstart", (e) => {
     updateColorAtSelected();
     }
 });
+
