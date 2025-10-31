@@ -1,227 +1,86 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ระบบตรวจวัดระดับสีไข่แดงอัตโนมัติ </title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YolkCam — ระบบตรวจวัดระดับสีไข่แดง</title>
+
+  <!-- โหลดฟอนต์ -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai&display=swap" rel="stylesheet">
 
   <!-- โหลด OpenCV.js -->
   <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
 
-  <!-- สไตล์พื้นฐาน -->
   <style>
     body {
-      font-family: "Prompt", sans-serif;
-      background: #fdfdfd;
+      font-family: 'Noto Sans Thai', sans-serif;
+      background: #fafafa;
+      color: #333;
       text-align: center;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background: linear-gradient(90deg, #ff9800, #f44336);
-      color: white;
-      padding: 20px 0;
-      font-size: 1.5rem;
-      font-weight: bold;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    main {
-      margin: 20px auto;
-      max-width: 800px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       padding: 20px;
     }
-
+    h1 { color: #d97706; }
     canvas {
-      width: 100%;
-      max-width: 700px;
-      border-radius: 12px;
+      margin-top: 10px;
       border: 2px solid #ccc;
-      margin-top: 10px;
-    }
-
-    #controls {
-      margin-top: 15px;
-    }
-
-    button {
-      margin: 5px;
-      padding: 10px 18px;
-      border: none;
       border-radius: 10px;
-      font-size: 1rem;
+      max-width: 100%;
+    }
+    #controls { margin: 15px 0; }
+    button {
+      background: #f59e0b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 15px;
+      margin: 5px;
       cursor: pointer;
-      transition: 0.3s;
+      font-size: 16px;
     }
-
-    button:hover {
-      opacity: 0.85;
-    }
-
-    #useCamera {
-      background-color: #ff9800;
-      color: white;
-    }
-
-    #useImage {
-      background-color: #4caf50;
-      color: white;
-    }
-
-    #analyzeYolk {
-      background-color: #2196f3;
-      color: white;
-    }
-
-    #colorResult,
-    #rocheResult {
-      font-size: 1.1rem;
-      margin-top: 10px;
-    }
-
+    button:hover { background: #d97706; }
     #shadePreview {
-      width: 60px;
-      height: 60px;
+      width: 80px;
+      height: 80px;
       margin: 10px auto;
       border-radius: 50%;
-      border: 2px solid #999;
+      border: 2px solid #333;
     }
-
     #errorMessage {
       color: red;
       margin-top: 10px;
       display: none;
     }
-
-    footer {
-      margin-top: 30px;
-      color: #666;
-      font-size: 0.9rem;
-    }
-
-    input[type="file"] {
-      display: none;
-    }
   </style>
 </head>
+
 <body>
+  <h1>🥚 ระบบตรวจวัดระดับสีไข่แดง (YolkCam)</h1>
 
-  <header>ระบบตรวจวัดระดับสีไข่แดงอัตโนมัติ </header>
+  <div id="controls">
+    <button id="useCamera">📷 ใช้กล้อง</button>
+    <button id="useImage">🖼️ ใช้ภาพนิ่ง</button>
+    <button id="analyzeYolk">🔍 วิเคราะห์ไข่แดงอัตโนมัติ</button>
+    <br><br>
+    <input type="file" id="imageInput" accept="image/*" style="display:none;">
+  </div>
 
-  <main>
-    <h3>📸 เลือกวิธีการนำเข้าภาพ</h3>
-    <div id="controls">
-      <button id="useCamera">🎥 ใช้กล้อง</button>
-      <button id="useImage">🖼️ อัปโหลดภาพ</button>
-      <button id="analyzeYolk">🔍 วิเคราะห์บริเวณไข่แดงอัตโนมัติ (CVS)</button>
-    </div>
+  <!-- 🔍 Zoom Slider -->
+  <div>
+    <label for="zoomSlider">🔍 ซูมกล้อง:</label>
+    <input id="zoomSlider" type="range" min="1" max="5" step="0.1" value="1" style="width:200px;">
+    <span id="zoomValue">1.0×</span>
+  </div>
 
-    <input type="file" id="imageInput" accept="image/*" />
+  <canvas id="canvas" width="640" height="480"></canvas>
 
-    <canvas id="canvas" width="640" height="480"></canvas>
+  <div id="shadePreview"></div>
 
-    <div id="shadePreview"></div>
+  <p id="colorResult">RGB: -, Lab: -</p>
+  <p id="rocheResult">ระดับสีไข่แดง: -</p>
+  <p id="errorMessage"></p>
 
-    <div id="colorResult">🖱️ กรุณาเลือกจุดบนภาพหรือวิดีโอ</div>
-    <div id="rocheResult">📊 ระดับสีไข่แดง: -</div>
-    <div id="errorMessage"></div>
-  </main>
-
-  <footer>
-    © 2025 ระบบตรวจวัดระดับสีไข่แดงอัตโนมัติ — พัฒนาโดย นายอนุพงษ์ เปลี่ยนไธสง
-  </footer>
-
-  <!-- เชื่อมต่อ script หลัก -->
+  <!-- 🔹 Script -->
   <script src="script.js"></script>
-
-  <!-- ส่วนขยายฟังก์ชัน OpenCV -->
-  <script>
-    const analyzeYolkBtn = document.getElementById("analyzeYolk");
-
-    analyzeYolkBtn.addEventListener("click", async () => {
-      errorMessage.style.display = "none";
-
-      // ตรวจสอบว่า OpenCV โหลดเสร็จหรือยัง
-      if (typeof cv === "undefined" || !cv.Mat) {
-        errorMessage.textContent = "⏳ กำลังโหลด OpenCV.js กรุณารอสักครู่...";
-        errorMessage.style.display = "block";
-        return;
-      }
-
-      analyzeYolkRegion();
-    });
-
-    // ฟังก์ชันวิเคราะห์บริเวณไข่แดงด้วย OpenCV.js
-    async function analyzeYolkRegion() {
-      if (!ctx || (!loadedImage && !videoStream)) {
-        errorMessage.textContent = "❌ กรุณาโหลดภาพหรือเปิดกล้องก่อน";
-        errorMessage.style.display = "block";
-        return;
-      }
-
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      let src = cv.matFromImageData(imageData);
-      let dst = new cv.Mat();
-      let mask = new cv.Mat();
-
-      try {
-        cv.cvtColor(src, dst, cv.COLOR_RGBA2BGR);
-        cv.cvtColor(dst, dst, cv.COLOR_BGR2HSV);
-
-        // ช่วงค่าสีของไข่แดง (เหลือง-ส้ม)
-        const lower = new cv.Mat(dst.rows, dst.cols, dst.type(), [10, 60, 80, 0]);
-        const upper = new cv.Mat(dst.rows, dst.cols, dst.type(), [35, 255, 255, 255]);
-
-        cv.inRange(dst, lower, upper, mask);
-        cv.GaussianBlur(mask, mask, new cv.Size(9, 9), 2, 2);
-
-        let contours = new cv.MatVector();
-        let hierarchy = new cv.Mat();
-        cv.findContours(mask, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-        let largestContour = null;
-        let maxArea = 0;
-        for (let i = 0; i < contours.size(); i++) {
-          const area = cv.contourArea(contours.get(i));
-          if (area > maxArea) {
-            maxArea = area;
-            largestContour = contours.get(i);
-          }
-        }
-
-        if (largestContour) {
-          const moments = cv.moments(largestContour);
-          const cx = Math.floor(moments.m10 / moments.m00);
-          const cy = Math.floor(moments.m01 / moments.m00);
-
-          selectedX = cx;
-          selectedY = cy;
-
-          drawCircleAtSelected();
-          updateColorAtSelected();
-
-          rocheResult.textContent += " 🟡 (ตรวจจับอัตโนมัติ)";
-        } else {
-          errorMessage.textContent = "ไม่พบบริเวณไข่แดงในภาพ";
-          errorMessage.style.display = "block";
-        }
-
-        lower.delete(); upper.delete(); dst.delete(); src.delete();
-        mask.delete(); contours.delete(); hierarchy.delete();
-      } catch (err) {
-        console.error(err);
-        errorMessage.textContent = "เกิดข้อผิดพลาดในการวิเคราะห์ภาพ: " + err.message;
-        errorMessage.style.display = "block";
-        src.delete(); dst.delete(); mask.delete();
-      }
-    }
-  </script>
-
 </body>
 </html>
-
 
