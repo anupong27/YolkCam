@@ -17,7 +17,7 @@ function xyzToLab(x, y, z) {
   let _x = x / refX, _y = y / refY, _z = z / refZ;
   _x = _x > 0.008856 ? Math.cbrt(_x) : 7.787 * _x + 16 / 116;
   _y = _y > 0.008856 ? Math.cbrt(_y) : 7.787 * _y + 16 / 116;
-  _z = _z > 0.008856 ? Math.cbrt(_z) : 7.787 * _z + 16 / 116; // แก้แล้ว
+  _z = _z > 0.008856 ? Math.cbrt(_z) : 7.787 * _z + 16 / 116;
   return { L: 116 * _y - 16, a: 500 * (_x - _y), b: 200 * (_y - _z) };
 }
 
@@ -73,6 +73,8 @@ const errorMessage = document.getElementById("errorMessage");
 const useCameraBtn = document.getElementById("useCamera");
 const useImageBtn = document.getElementById("useImage");
 const analyzeBtn = document.getElementById("analyzeYolk");
+const zoomSlider = document.getElementById("zoomSlider");
+const zoomValue = document.getElementById("zoomValue");
 
 let loadedImage = null;
 let videoStream = null;
@@ -87,7 +89,27 @@ videoElement.style.display = "none";
 document.body.appendChild(videoElement);
 
 // =============================
-// 🔸 ฟังก์ชันทั่วไป
+// 🔹 Zoom Camera
+// =============================
+zoomSlider.addEventListener("input", async () => {
+  const zoom = parseFloat(zoomSlider.value);
+  zoomValue.textContent = `${zoom.toFixed(1)}×`;
+
+  if (videoStream) {
+    const [track] = videoStream.getVideoTracks();
+    const capabilities = track.getCapabilities();
+    if (capabilities.zoom) {
+      try {
+        await track.applyConstraints({ advanced: [{ zoom }] });
+      } catch (err) {
+        console.warn("ไม่สามารถซูมกล้องได้:", err);
+      }
+    }
+  }
+});
+
+// =============================
+// 🔹 ฟังก์ชันทั่วไป
 // =============================
 function resetCanvasState() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -102,7 +124,6 @@ function resetCanvasState() {
 }
 
 function getColorAtPoint(x, y) {
-  if (!ctx) return null;
   const pixel = ctx.getImageData(x, y, 1, 1).data;
   return { r: pixel[0], g: pixel[1], b: pixel[2] };
 }
@@ -134,12 +155,28 @@ useCameraBtn.addEventListener("click", async () => {
   resetCanvasState();
   isCameraMode = true;
   imageInput.style.display = "none";
+
   try {
     videoStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "environment" },
       audio: false,
     });
     videoElement.srcObject = videoStream;
+
+    const [track] = videoStream.getVideoTracks();
+    const capabilities = track.getCapabilities();
+
+    if (capabilities.zoom) {
+      zoomSlider.min = capabilities.zoom.min;
+      zoomSlider.max = capabilities.zoom.max;
+      zoomSlider.step = capabilities.zoom.step || 0.1;
+      zoomSlider.value = capabilities.zoom.min;
+      zoomSlider.disabled = false;
+    } else {
+      zoomSlider.disabled = true;
+      zoomValue.textContent = "ไม่รองรับ";
+    }
+
     videoElement.onloadedmetadata = () => {
       canvas.width = videoElement.videoWidth;
       canvas.height = videoElement.videoHeight;
@@ -192,7 +229,7 @@ canvas.addEventListener("click", e => {
 });
 
 // =============================
-// 🔸 วิเคราะห์ไข่แดงด้วย OpenCV.js (ปรับปรุง)
+// 🔸 วิเคราะห์ไข่แดงด้วย OpenCV.js
 // =============================
 async function detectYolkWithOpenCV() {
   if (typeof cv === "undefined") {
@@ -206,15 +243,11 @@ async function detectYolkWithOpenCV() {
   let mask = new cv.Mat();
   let kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5,5));
 
-  // แปลงเป็น HSV
   cv.cvtColor(src, hsv, cv.COLOR_RGBA2HSV);
-
-  // ช่วงค่าสีไข่แดง
   let lower = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [10, 60, 80, 0]);
   let upper = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [35, 255, 255, 255]);
   cv.inRange(hsv, lower, upper, mask);
 
-  // Morphology: open → close เพื่อลด noise
   cv.morphologyEx(mask, mask, cv.MORPH_OPEN, kernel);
   cv.morphologyEx(mask, mask, cv.MORPH_CLOSE, kernel);
   cv.GaussianBlur(mask, mask, new cv.Size(9,9), 2, 2);
@@ -233,13 +266,11 @@ async function detectYolkWithOpenCV() {
   }
 
   if (c && maxArea > 0) {
-    // สร้าง mask ของ contour
     let roiMask = new cv.Mat.zeros(mask.rows, mask.cols, cv.CV_8UC1);
     let cntVector = new cv.MatVector();
     cntVector.push_back(c);
     cv.drawContours(roiMask, cntVector, 0, new cv.Scalar(255), -1);
 
-    // ค่าเฉลี่ยสีใน ROI
     let meanColor = cv.mean(src, roiMask);
     selectedX = Math.floor(cv.moments(c).m10 / cv.moments(c).m00);
     selectedY = Math.floor(cv.moments(c).m01 / cv.moments(c).m00);
@@ -253,10 +284,8 @@ async function detectYolkWithOpenCV() {
     errorMessage.style.display = "block";
   }
 
-  // ล้าง memory
   src.delete(); hsv.delete(); mask.delete(); lower.delete(); upper.delete(); contours.delete(); hierarchy.delete(); kernel.delete();
 }
 
 analyzeBtn.addEventListener("click", detectYolkWithOpenCV);
-
 
