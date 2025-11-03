@@ -38,14 +38,14 @@ function deltaE(lab1, lab2) {
 // 🔸 Roche YolkFan สีมาตรฐาน
 // =============================
 const rocheShades = [
-  { name: "1", rgb: [241, 202, 107] }, { name: "2", rgb: [247, 198, 89] },
-  { name: "3", rgb: [252, 198, 83] },  { name: "4", rgb: [255, 197, 68] },
-  { name: "5", rgb: [255, 187, 40] },  { name: "6", rgb: [255, 183, 26] },
-  { name: "7", rgb: [255, 182, 0] },   { name: "8", rgb: [255, 180, 0] },
-  { name: "9", rgb: [255, 172, 0] },   { name: "10", rgb: [255, 165, 0] },
-  { name: "11", rgb: [255, 157, 0] },  { name: "12", rgb: [255, 144, 0] },
-  { name: "13", rgb: [255, 140, 0] },  { name: "14", rgb: [255, 129, 9] },
-  { name: "15", rgb: [253, 116, 25] }, { name: "16", rgb: [239, 95, 30] },
+  { name: "1", rgb: [245.5, 218.8, 101.8] }, { name: "2", rgb: [252.2, 216.2, 80.2] },
+  { name: "3", rgb: [252.4, 212.1, 69.7] },  { name: "4", rgb: [254.7, 208.7, 48.7] },
+  { name: "5", rgb: [253.6, 197.5, 29.3] },  { name: "6", rgb: [253.5, 191.1, 18] },
+  { name: "7", rgb: [254.2, 185.9, 5.6] },   { name: "8", rgb: [255, 179, 3] },
+  { name: "9", rgb: [253, 168, 1.1] },   { name: "10", rgb: [254, 155.8, 2.4] },
+  { name: "11", rgb: [254.7, 141.9, 4.3] },  { name: "12", rgb: [254.2, 131.7, 7.5] },
+  { name: "13", rgb: [253.8, 123.4, 16.1] },  { name: "14", rgb: [254.7, 105.7, 25.7] },
+  { name: "15", rgb: [254, 94, 32.3] }, 
 ].map(s => ({ ...s, lab: rgbToLab(...s.rgb) }));
 
 function findClosestRocheShade(labSample) {
@@ -288,4 +288,5 @@ async function detectYolkWithOpenCV() {
 }
 
 analyzeBtn.addEventListener("click", detectYolkWithOpenCV);
+
 
